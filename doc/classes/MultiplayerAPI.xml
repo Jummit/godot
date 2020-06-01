@@ -85,6 +85,14 @@
 				This effectively allows to have different branches of the scene tree to be managed by different MultiplayerAPI, allowing for example to run both client and server in the same scene.
 			</description>
 		</method>
+		<method name="get_root_node">
+			<return type="Node">
+			</return>
+			<description>
+				Returns the root node to use for RPCs. Instead of an absolute path, a relative path will be used to find the node upon which the RPC should be executed.
+				This effectively allows to have different branches of the scene tree to be managed by different MultiplayerAPI, allowing for example to run both client and server in the same scene.
+			</description>
+		</method>
 	</methods>
 	<members>
 		<member name="allow_object_decoding" type="bool" setter="set_allow_object_decoding" getter="is_object_decoding_allowed" default="false">
@@ -96,6 +104,9 @@
 		</member>
 		<member name="refuse_new_network_connections" type="bool" setter="set_refuse_new_network_connections" getter="is_refusing_new_network_connections" default="false">
 			If [code]true[/code], the MultiplayerAPI's [member network_peer] refuses new incoming connections.
+		</member>
+		<member name="root_node" type="Node" setter="set_root_node" getter="get_root_node">
+			The root node to use for RPCs. Instead of an absolute path, a relative path will be used to find the node upon which the RPC should be executed. This effectively allows to have different branches of the scene tree to be managed by different MultiplayerAPI, allowing for example to run both client and server in the same scene.
 		</member>
 	</members>
 	<signals>
