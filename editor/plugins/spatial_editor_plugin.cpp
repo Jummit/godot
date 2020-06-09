@@ -4742,6 +4742,9 @@ void SpatialEditor::_init_indicators() {
 		Vector<Vector3> origin_points;
 
 		for (int i = 0; i < 3; i++) {
+			if (i == 1 && !EditorSettings::get_singleton()->get("editors/3d/enable_y_axis")) {
+				continue;
+			}
 			Vector3 axis;
 			axis[i] = 1;
 			Color origin_color;
@@ -4750,10 +4753,10 @@ void SpatialEditor::_init_indicators() {
 					origin_color = get_color("axis_x_color", "Editor");
 					break;
 				case 1:
-					origin_color = get_color("axis_y_color", "Editor");
+					origin_color = get_color("axis_z_color", "Editor");
 					break;
 				case 2:
-					origin_color = get_color("axis_z_color", "Editor");
+					origin_color = get_color("axis_y_color", "Editor");
 					break;
 				default:
 					origin_color = Color();
@@ -5127,8 +5130,10 @@ void SpatialEditor::_init_grid() {
 
 		for (int j = -grid_size; j <= grid_size; j++) {
 			Vector3 p1 = axis_n1 * j + axis_n2 * -grid_size;
+			Vector3 p1_mid = axis_n1 * j;
 			Vector3 p1_dest = p1 * (-axis_n2 + axis_n1);
 			Vector3 p2 = axis_n2 * j + axis_n1 * -grid_size;
+			Vector3 p2_mid = axis_n2 * j;
 			Vector3 p2_dest = p2 * (-axis_n1 + axis_n2);
 
 			Color line_color = secondary_grid_color;
@@ -5140,15 +5145,30 @@ void SpatialEditor::_init_grid() {
 				line_color = primary_grid_color;
 			}
 
+			line_color = line_color.linear_interpolate(Color(0.156863, 0.184314, 0.211765), float(abs(j) + 1.0) / grid_size);
 			grid_points[i].push_back(p1);
+			grid_points[i].push_back(p1_mid);
+
+			grid_points[i].push_back(p1_mid);
 			grid_points[i].push_back(p1_dest);
-			grid_colors[i].push_back(line_color);
+
+			grid_colors[i].push_back(Color(0.156863, 0.184314, 0.211765));
 			grid_colors[i].push_back(line_color);
 
+			grid_colors[i].push_back(line_color);
+			grid_colors[i].push_back(Color(0.156863, 0.184314, 0.211765));
+
 			grid_points[i].push_back(p2);
+			grid_points[i].push_back(p2_mid);
+
+			grid_points[i].push_back(p2_mid);
 			grid_points[i].push_back(p2_dest);
+
+			grid_colors[i].push_back(Color(0.156863, 0.184314, 0.211765));
 			grid_colors[i].push_back(line_color);
+
 			grid_colors[i].push_back(line_color);
+			grid_colors[i].push_back(Color(0.156863, 0.184314, 0.211765));
 		}
 
 		grid[i] = VisualServer::get_singleton()->mesh_create();
@@ -5969,6 +5989,8 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::INT, "editors/3d/manipulator_gizmo_size", PROPERTY_HINT_RANGE, "16,1024,1"));
 	EDITOR_DEF("editors/3d/manipulator_gizmo_opacity", 0.4);
 	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::REAL, "editors/3d/manipulator_gizmo_opacity", PROPERTY_HINT_RANGE, "0,1,0.01"));
+	EDITOR_DEF("editors/3d/enable_y_axis", true);
+	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::BOOL, "editors/3d/enable_y_axis", PROPERTY_HINT_NONE));
 
 	over_gizmo_handle = -1;
 }
