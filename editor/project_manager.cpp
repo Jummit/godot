@@ -2230,6 +2230,49 @@ void ProjectManager::_new_project() {
 	npdialog->show_dialog();
 }
 
+void ProjectManager::_new_tmp_project() {
+	
+	Math::randomize();
+	String project_name = itos(Math::rand());
+	String dir = "/tmp/" + project_name;
+
+	DirAccess *d = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
+	d->change_dir("/tmp");
+	d->make_dir(project_name);
+
+	ProjectSettings::CustomMap initial_settings;
+	initial_settings["rendering/quality/driver/driver_name"] = "GLES3";
+	initial_settings["application/config/name"] = project_name;
+	initial_settings["application/config/icon"] = "res://icon.png";
+	initial_settings["rendering/environment/default_environment"] = "res://default_env.tres";
+
+	ProjectSettings::get_singleton()->save_custom(dir.plus_file("project.godot"), initial_settings, Vector<String>(), false);
+	ResourceSaver::save(dir.plus_file("icon.png"), get_icon("DefaultProjectIcon", "EditorIcons"));
+
+	FileAccess *f = FileAccess::open(dir.plus_file("default_env.tres"), FileAccess::WRITE);
+	f->store_line("[gd_resource type=\"Environment\" load_steps=2 format=2]");
+	f->store_line("[sub_resource type=\"ProceduralSky\" id=1]");
+	f->store_line("[resource]");
+	f->store_line("background_mode = 2");
+	f->store_line("background_sky = SubResource( 1 )");
+	memdelete(f);
+
+	if (dir.ends_with("/"))
+		dir = dir.substr(0, dir.length() - 1);
+	String proj = get_project_key_from_path(dir);
+	EditorSettings::get_singleton()->set("projects/" + proj, dir);
+	EditorSettings::get_singleton()->save();
+
+	project_filter->clear();
+	int i = _project_list->refresh_project(dir);
+	_project_list->select_project(i);
+	_project_list->ensure_project_visible(i);
+	_open_selected_projects_ask();
+
+	_project_list->update_dock_menu();
+}
+
+
 void ProjectManager::_import_project() {
 
 	npdialog->set_mode(ProjectDialog::MODE_IMPORT);
@@ -2397,6 +2440,7 @@ void ProjectManager::_bind_methods() {
 	ClassDB::bind_method("_scan_begin", &ProjectManager::_scan_begin);
 	ClassDB::bind_method("_import_project", &ProjectManager::_import_project);
 	ClassDB::bind_method("_new_project", &ProjectManager::_new_project);
+	ClassDB::bind_method("_new_tmp_project", &ProjectManager::_new_tmp_project);
 	ClassDB::bind_method("_rename_project", &ProjectManager::_rename_project);
 	ClassDB::bind_method("_erase_project", &ProjectManager::_erase_project);
 	ClassDB::bind_method("_erase_missing_projects", &ProjectManager::_erase_missing_projects);
@@ -2619,6 +2663,11 @@ ProjectManager::ProjectManager() {
 	create->set_text(TTR("New Project"));
 	tree_vb->add_child(create);
 	create->connect("pressed", this, "_new_project");
+
+	Button *create_tmp = memnew(Button);
+	create_tmp->set_text(TTR("Tmp Project"));
+	tree_vb->add_child(create_tmp);
+	create_tmp->connect("pressed", this, "_new_tmp_project");
 
 	Button *import = memnew(Button);
 	import->set_text(TTR("Import"));

@@ -91,6 +91,7 @@ class ProjectManager : public Control {
 	void _open_selected_projects_ask();
 	void _import_project();
 	void _new_project();
+	void _new_tmp_project();
 	void _rename_project();
 	void _erase_project();
 	void _erase_missing_projects();
