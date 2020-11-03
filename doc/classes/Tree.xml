@@ -130,6 +130,11 @@
 				Returns the column for the currently edited item.
 			</description>
 		</method>
+		<method name="edit_selected">
+			<description>
+				Edits the selected tree item as if it was clicked. The item must be set editable with [method TreeItem.set_editable]. Returns true if the item could be edited. Fails if no item is selected.
+			</description>
+		</method>
 		<method name="get_item_area_rect" qualifiers="const">
 			<return type="Rect2">
 			</return>
