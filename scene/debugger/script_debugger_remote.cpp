@@ -127,6 +127,12 @@ void ScriptDebuggerRemote::_save_node(ObjectID id, const String &p_path) {
 	Node *node = Object::cast_to<Node>(ObjectDB::get_instance(id));
 	ERR_FAIL_COND(!node);
 
+	Array a = Array();
+	a.push_back(node);
+	node->propagate_call("set_owner", a);
+	Array b = Array();
+	b.push_back("");
+	node->propagate_call("set_filename", b);
 	Ref<PackedScene> ps = memnew(PackedScene);
 	ps->pack(node);
 	ResourceSaver::save(p_path, ps);
@@ -863,6 +869,8 @@ void ScriptDebuggerRemote::_poll_events() {
 				remove_breakpoint(cmd[2], cmd[1]);
 		} else if (command == "set_skip_breakpoints") {
 			skip_breakpoints = cmd[1];
+		} else if (command == "save_node") {
+			_save_node(cmd[1], cmd[2]);
 		} else {
 			_parse_live_edit(cmd);
 		}
