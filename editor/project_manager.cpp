@@ -2234,10 +2234,11 @@ void ProjectManager::_new_tmp_project() {
 	
 	Math::randomize();
 	String project_name = itos(Math::rand());
-	String dir = "/tmp/" + project_name;
+	String tmp_project_dir = EditorSettings::get_singleton()->get("filesystem/directories/tmp_project_path");
+	String dir = tmp_project_dir.plus_file(project_name);
 
 	DirAccess *d = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
-	d->change_dir("/tmp");
+	d->change_dir(tmp_project_dir);
 	d->make_dir(project_name);
 
 	ProjectSettings::CustomMap initial_settings;
