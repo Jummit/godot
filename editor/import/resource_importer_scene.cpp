@@ -37,6 +37,7 @@
 #include "scene/3d/navigation.h"
 #include "scene/3d/physics_body.h"
 #include "scene/3d/vehicle_body.h"
+#include "scene/3d/light.h"
 #include "scene/animation/animation_player.h"
 #include "scene/resources/animation.h"
 #include "scene/resources/box_shape.h"
@@ -888,6 +889,21 @@ static String _make_extname(const String &p_str) {
 	return ext_name;
 }
 
+void ResourceImporterScene::_find_lights(Node *p_node, Vector<Light*> &lights) {
+
+	List<PropertyInfo> pi;
+	p_node->get_property_list(&pi);
+	Light *light = Object::cast_to<Light>(p_node);
+
+	if (light) {
+		lights.push_back(light);
+	}
+
+	for (int i = 0; i < p_node->get_child_count(); i++) {
+		_find_lights(p_node->get_child(i), lights);
+	}
+}
+
 void ResourceImporterScene::_find_meshes(Node *p_node, Map<Ref<ArrayMesh>, Transform> &meshes) {
 
 	MeshInstance *mi = Object::cast_to<MeshInstance>(p_node);
@@ -1126,6 +1142,7 @@ void ResourceImporterScene::get_import_options(List<ImportOption> *r_options, in
 	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "meshes/storage", PROPERTY_HINT_ENUM, "Built-In,Files (.mesh),Files (.tres)"), meshes_out ? 1 : 0));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "meshes/light_baking", PROPERTY_HINT_ENUM, "Disabled,Enable,Gen Lightmaps", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_UPDATE_ALL_IF_MODIFIED), 0));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::REAL, "meshes/lightmap_texel_size", PROPERTY_HINT_RANGE, "0.001,100,0.001"), 0.1));
+	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "lights/light_baking"), false));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "skins/use_named_skins"), true));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "external_files/store_in_subdir"), false));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "animation/import", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_UPDATE_ALL_IF_MODIFIED), true));
@@ -1337,11 +1354,12 @@ Error ResourceImporterScene::import(const String &p_source_file, const String &p
 	float anim_optimizer_linerr = p_options["animation/optimizer/max_linear_error"];
 	float anim_optimizer_angerr = p_options["animation/optimizer/max_angular_error"];
 	float anim_optimizer_maxang = p_options["animation/optimizer/max_angle"];
-	int light_bake_mode = p_options["meshes/light_baking"];
+	int mesh_light_bake_mode = p_options["meshes/light_baking"];
+	bool light_bake_mode = p_options["lights/light_baking"];
 
 	Map<Ref<Mesh>, List<Ref<Shape> > > collision_map;
 
-	scene = _fix_node(scene, scene, collision_map, LightBakeMode(light_bake_mode));
+	scene = _fix_node(scene, scene, collision_map, LightBakeMode(mesh_light_bake_mode));
 
 	if (use_optimizer) {
 		_optimize_animations(scene, anim_optimizer_linerr, anim_optimizer_angerr, anim_optimizer_maxang);
@@ -1395,7 +1413,7 @@ Error ResourceImporterScene::import(const String &p_source_file, const String &p
 		}
 	}
 
-	if (light_bake_mode == 2 /* || generate LOD */) {
+	if (mesh_light_bake_mode == 2 /* || generate LOD */) {
 
 		Map<Ref<ArrayMesh>, Transform> meshes;
 		_find_meshes(scene, meshes);
@@ -1511,6 +1529,14 @@ Error ResourceImporterScene::import(const String &p_source_file, const String &p
 
 			file->close();
 			memfree(cache_data);
+		}
+	}
+
+	if (light_bake_mode) {
+		Vector<Light*> lights;
+		_find_lights(scene, lights);
+		for (int i = 0; i < lights.size(); i++) {
+			lights[i]->set_bake_mode(Light::BAKE_ALL);
 		}
 	}
 
