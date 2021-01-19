@@ -205,8 +205,6 @@ void MultiplayerAPI::_process_packet(int p_from, const uint8_t *p_packet, int p_
 
 			Node *node = _process_get_node(p_from, p_packet, p_packet_len);
 
-			ERR_FAIL_COND_MSG(node == NULL, "Invalid packet received. Requested node was not found.");
-
 			// Detect cstring end.
 			int len_end = 5;
 			for (; len_end < p_packet_len; len_end++) {
@@ -218,6 +216,8 @@ void MultiplayerAPI::_process_packet(int p_from, const uint8_t *p_packet, int p_
 			ERR_FAIL_COND_MSG(len_end >= p_packet_len, "Invalid packet received. Size too small.");
 
 			StringName name = String::utf8((const char *)&p_packet[5]);
+
+			ERR_FAIL_COND_MSG(node == NULL, "RPC " + name + " failed. Requested node was not found.");
 
 			if (packet_type == NETWORK_COMMAND_REMOTE_CALL) {
 
