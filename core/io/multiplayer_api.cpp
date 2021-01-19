@@ -640,7 +640,7 @@ void MultiplayerAPI::rpcp(Node *p_node, int p_peer_id, bool p_unreliable, const 
 
 	ERR_FAIL_COND_MSG(!network_peer.is_valid(), "Trying to call an RPC while no network peer is active.");
 	ERR_FAIL_COND_MSG(!p_node->is_inside_tree(), "Trying to call an RPC on a node which is not inside SceneTree.");
-	ERR_FAIL_COND_MSG(network_peer->get_connection_status() != NetworkedMultiplayerPeer::CONNECTION_CONNECTED, "Trying to call an RPC via a network peer which is not connected.");
+	ERR_FAIL_COND_MSG(!connected(), "Trying to call an RPC via a network peer which is not connected.");
 
 	int node_id = network_peer->get_unique_id();
 	bool skip_rpc = node_id == p_peer_id;
@@ -714,7 +714,7 @@ void MultiplayerAPI::rsetp(Node *p_node, int p_peer_id, bool p_unreliable, const
 
 	ERR_FAIL_COND_MSG(!network_peer.is_valid(), "Trying to RSET while no network peer is active.");
 	ERR_FAIL_COND_MSG(!p_node->is_inside_tree(), "Trying to RSET on a node which is not inside SceneTree.");
-	ERR_FAIL_COND_MSG(network_peer->get_connection_status() != NetworkedMultiplayerPeer::CONNECTION_CONNECTED, "Trying to send an RSET via a network peer which is not connected.");
+	ERR_FAIL_COND_MSG(!connected(), "Trying to send an RSET via a network peer which is not connected.");
 
 	int node_id = network_peer->get_unique_id();
 	bool is_master = p_node->is_network_master();
@@ -786,7 +786,7 @@ Error MultiplayerAPI::send_bytes(PoolVector<uint8_t> p_data, int p_to, Networked
 
 	ERR_FAIL_COND_V_MSG(p_data.size() < 1, ERR_INVALID_DATA, "Trying to send an empty raw packet.");
 	ERR_FAIL_COND_V_MSG(!network_peer.is_valid(), ERR_UNCONFIGURED, "Trying to send a raw packet while no network peer is active.");
-	ERR_FAIL_COND_V_MSG(network_peer->get_connection_status() != NetworkedMultiplayerPeer::CONNECTION_CONNECTED, ERR_UNCONFIGURED, "Trying to send a raw packet via a network peer which is not connected.");
+	ERR_FAIL_COND_V_MSG(!connected(), ERR_UNCONFIGURED, "Trying to send a raw packet via a network peer which is not connected.");
 
 	MAKE_ROOM(p_data.size() + 1);
 	PoolVector<uint8_t>::Read r = p_data.read();
@@ -824,6 +824,11 @@ bool MultiplayerAPI::is_network_server() const {
 	// XXX Maybe fail silently? Maybe should actually return true to make development of both local and online multiplayer easier?
 	ERR_FAIL_COND_V_MSG(!network_peer.is_valid(), false, "No network peer is assigned. I can't be a server.");
 	return network_peer->is_server();
+}
+
+bool MultiplayerAPI::connected() const {
+
+	return network_peer->get_connection_status() == NetworkedMultiplayerPeer::CONNECTION_CONNECTED;
 }
 
 void MultiplayerAPI::set_refuse_new_network_connections(bool p_refuse) {
@@ -957,6 +962,7 @@ void MultiplayerAPI::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_network_peer"), &MultiplayerAPI::get_network_peer);
 	ClassDB::bind_method(D_METHOD("get_network_unique_id"), &MultiplayerAPI::get_network_unique_id);
 	ClassDB::bind_method(D_METHOD("is_network_server"), &MultiplayerAPI::is_network_server);
+	ClassDB::bind_method(D_METHOD("connected"), &MultiplayerAPI::connected);
 	ClassDB::bind_method(D_METHOD("get_rpc_sender_id"), &MultiplayerAPI::get_rpc_sender_id);
 	ClassDB::bind_method(D_METHOD("_add_peer", "id"), &MultiplayerAPI::_add_peer);
 	ClassDB::bind_method(D_METHOD("_del_peer", "id"), &MultiplayerAPI::_del_peer);

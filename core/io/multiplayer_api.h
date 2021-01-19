@@ -152,6 +152,7 @@ public:
 	int get_rpc_sender_id() const { return rpc_sender_id; }
 	int get_network_unique_id() const;
 	bool is_network_server() const;
+	bool connected() const;
 	void set_refuse_new_network_connections(bool p_refuse);
 	bool is_refusing_new_network_connections() const;
 
