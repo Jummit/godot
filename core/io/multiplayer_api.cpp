@@ -173,7 +173,7 @@ Ref<NetworkedMultiplayerPeer> MultiplayerAPI::get_network_peer() const {
 
 void MultiplayerAPI::_process_packet(int p_from, const uint8_t *p_packet, int p_packet_len) {
 
-	ERR_FAIL_COND_MSG(root_node == NULL, "Multiplayer root node was not initialized. If you are using custom multiplayer, remember to set the root node via MultiplayerAPI.set_root_node before using it.");
+	ERR_FAIL_COND_MSG(root_node == NULL, "Multiplayer root node was not initialized. If you are using custom multiplayer, remember to set the root node via MultiplayerAPI.root_node before using it.");
 	ERR_FAIL_COND_MSG(p_packet_len < 1, "Invalid packet received. Size too small.");
 
 #ifdef DEBUG_ENABLED
@@ -217,8 +217,6 @@ void MultiplayerAPI::_process_packet(int p_from, const uint8_t *p_packet, int p_
 
 			StringName name = String::utf8((const char *)&p_packet[5]);
 
-			ERR_FAIL_COND_MSG(node == NULL, "RPC " + name + " failed. Requested node was not found.");
-
 			if (packet_type == NETWORK_COMMAND_REMOTE_CALL) {
 
 				_process_rpc(node, name, p_from, p_packet, p_packet_len, len_end + 1);
@@ -255,31 +253,31 @@ Node *MultiplayerAPI::_process_get_node(int p_from, const uint8_t *p_packet, int
 		NodePath np = paths;
 
 		node = root_node->get_node(np);
-
-		if (!node)
-			ERR_PRINTS("Failed to get path from RPC: " + String(np) + ".");
 	} else {
 		// Use cached path.
 		int id = target;
 
 		Map<int, PathGetCache>::Element *E = path_get_cache.find(p_from);
-		ERR_FAIL_COND_V_MSG(!E, NULL, "Invalid packet received. Requests invalid peer cache.");
+		if (!E) {
+			return NULL;
+		}
 
 		Map<int, PathGetCache::NodeInfo>::Element *F = E->get().nodes.find(id);
-		ERR_FAIL_COND_V_MSG(!F, NULL, "Invalid packet received. Unabled to find requested cached node.");
+		if (!F) {
+			return NULL;
+		}
 
 		PathGetCache::NodeInfo *ni = &F->get();
 		// Do proper caching later.
 
 		node = root_node->get_node(ni->path);
-		if (!node)
-			ERR_PRINTS("Failed to get cached path from RPC: " + String(ni->path) + ".");
 	}
 	return node;
 }
 
 void MultiplayerAPI::_process_rpc(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset) {
 
+	ERR_FAIL_COND_MSG(p_node == NULL, "RPC " + p_name + " failed. Requested node was not found.");
 	ERR_FAIL_COND_MSG(p_offset >= p_packet_len, "Invalid packet received. Size too small.");
 
 	// Check that remote can call the RPC on this node.
@@ -334,6 +332,7 @@ void MultiplayerAPI::_process_rpc(Node *p_node, const StringName &p_name, int p_
 
 void MultiplayerAPI::_process_rset(Node *p_node, const StringName &p_name, int p_from, const uint8_t *p_packet, int p_packet_len, int p_offset) {
 
+	ERR_FAIL_COND_MSG(p_node == NULL, "rset of " + p_name + " failed. Requested node was not found.");
 	ERR_FAIL_COND_MSG(p_offset >= p_packet_len, "Invalid packet received. Size too small.");
 
 	// Check that remote can call the RSET on this node.
@@ -346,7 +345,7 @@ void MultiplayerAPI::_process_rset(Node *p_node, const StringName &p_name, int p
 	}
 
 	bool can_call = _can_call_mode(p_node, rset_mode, p_from);
-	ERR_FAIL_COND_MSG(!can_call, "RSET '" + String(p_name) + "' is not allowed on node " + p_node->get_path() + " from: " + itos(p_from) + ". Mode is " + itos((int)rset_mode) + ", master is " + itos(p_node->get_network_master()) + ".");
+	ERR_FAIL_COND_MSG(!can_call, "RSET '" + p_name + "' is not allowed on node " + p_node->get_path() + " from: " + itos(p_from) + ". Mode is " + itos((int)rset_mode) + ", master is " + itos(p_node->get_network_master()) + ".");
 
 #ifdef DEBUG_ENABLED
 	if (profiling) {
@@ -365,7 +364,7 @@ void MultiplayerAPI::_process_rset(Node *p_node, const StringName &p_name, int p
 
 	p_node->set(p_name, value, &valid);
 	if (!valid) {
-		String error = "Error setting remote property '" + String(p_name) + "', not found in object of type " + p_node->get_class() + ".";
+		String error = "Error setting remote property '" + p_name + "', not found in object of type " + p_node->get_class() + ".";
 		ERR_PRINTS(error);
 	}
 }
