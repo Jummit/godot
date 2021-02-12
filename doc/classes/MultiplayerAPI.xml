@@ -19,6 +19,13 @@
 				Clears the current MultiplayerAPI network state (you shouldn't call this unless you know what you are doing).
 			</description>
 		</method>
+		<method name="connected" qualifiers="const">
+			<return type="bool">
+			</return>
+			<description>
+				Returns true if the the [enum NetworkedMultiplayerPeer.ConnectionStatus] of this MultiplayerAPI's [member network_peer] is [constant NetworkedMultiplayerPeer.ConnectionStatus.CONNECTION_CONNECTED].
+			</description>
+		</method>
 		<method name="get_network_connected_peers" qualifiers="const">
 			<return type="PoolIntArray">
 			</return>
