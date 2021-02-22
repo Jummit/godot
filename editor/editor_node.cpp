@@ -2445,7 +2445,7 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 				String existing;
 				if (extensions.size()) {
 					String root_name(scene->get_name());
-					existing = root_name + "." + extensions.front()->get().to_lower();
+					existing = root_name.camelcase_to_underscore(true) + "." + extensions.front()->get().to_lower();
 				}
 				file->set_current_path(existing);
 			}
