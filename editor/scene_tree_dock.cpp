@@ -2787,7 +2787,7 @@ void SceneTreeDock::attach_script_to_selected(bool p_extend) {
 	if (path == "") {
 		String root_path = editor_data->get_edited_scene_root()->get_filename();
 		if (root_path == "") {
-			path = String("res://").plus_file(selected->get_name());
+			path = String("res://").plus_file(selected->get_name().operator String().camelcase_to_underscore());
 		} else {
 			path = root_path.get_base_dir().plus_file(selected->get_name());
 		}
