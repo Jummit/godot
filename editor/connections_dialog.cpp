@@ -157,6 +157,12 @@ void ConnectDialog::_tree_node_selected() {
 	if (!current)
 		return;
 
+	if (current == get_source()) {
+		set_dst_method("_on_" + get_signal_name());
+	} else {
+		set_dst_method("_on_" + get_source()->get_name() + "_" + get_signal_name());
+	}
+
 	dst_path = source->get_path_to(current);
 	_update_ok_enabled();
 }
@@ -322,6 +328,12 @@ void ConnectDialog::init(Connection c, bool bEdit) {
 
 	tree->set_selected(NULL);
 	tree->set_marked(source, true);
+
+	if (tree->get_selected() == get_source()) {
+		set_dst_method("_on_" + signal);
+	} else {
+		set_dst_method("_on_" + source->get_name() + "_" + signal);
+	}
 
 	if (c.target) {
 		set_dst_node(static_cast<Node *>(c.target));
@@ -726,13 +738,10 @@ void ConnectionsDock::_open_connection_dialog(TreeItem &item) {
 		dst_node = _find_first_script(get_tree()->get_edited_scene_root(), get_tree()->get_edited_scene_root());
 	}
 
-	StringName dst_method = "_on_" + midname + "_" + signal;
-
 	Connection c;
 	c.source = selectedNode;
 	c.signal = StringName(signalname);
 	c.target = dst_node;
-	c.method = dst_method;
 	connect_dialog->popup_dialog(signalname);
 	connect_dialog->init(c);
 	connect_dialog->set_title(TTR("Connect a Signal to a Method"));
