@@ -388,7 +388,11 @@ void EditorPlugin::remove_custom_type(const String &p_type) {
 }
 
 void EditorPlugin::add_autoload_singleton(const String &p_name, const String &p_path) {
-	EditorNode::get_singleton()->get_project_settings()->get_autoload_settings()->autoload_add(p_name, p_path);
+	String path = p_path;
+	if (!p_path.is_abs_path()) {
+		path = get_script_instance()->get_script()->get_path().get_base_dir().plus_file(p_path);
+	}
+	EditorNode::get_singleton()->get_project_settings()->get_autoload_settings()->autoload_add(p_name, path);
 }
 
 void EditorPlugin::remove_autoload_singleton(const String &p_name) {
