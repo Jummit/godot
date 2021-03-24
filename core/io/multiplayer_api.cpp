@@ -827,6 +827,10 @@ bool MultiplayerAPI::is_network_server() const {
 
 bool MultiplayerAPI::connected() const {
 
+	if (!network_peer.is_valid()) {
+		return false;
+	}
+
 	return network_peer->get_connection_status() == NetworkedMultiplayerPeer::CONNECTION_CONNECTED;
 }
 
